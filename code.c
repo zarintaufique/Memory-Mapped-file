@@ -37,3 +37,32 @@ void *change(void* buff){
 	}
 	pthread_exit(0);
 }
+int main() {
+		char filename[10]="file.txt";
+		int fd = open(filename,  O_RDWR);
+
+		if (fd == -1) {
+   		 printf("File could not open!\n");
+  		 return 1;
+ 		}
+ 		
+ 		fseek(fd, 0L, SEEK_END);
+		int sz = ftell(fd);
+	
+		pthread_t thread[2];
+ 		char *map= (char*) mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+ 		 if (map == MAP_FAILED) {
+ 			  printf("File could not be memory mapped!\n");
+  			  return 1;
+		 } 
+		
+		pthread_create(&thread[0], NULL, &change, map);
+		pthread_create(&thread[1], NULL, &change, map + 50);
+		
+		pthread_join(thread[0], NULL);
+		pthread_join(thread[1], NULL);
+
+		munmap(map, 100);
+		close(fd);
+	return 0;
+}
